@@ -122,7 +122,6 @@ function activedemand_process_block_shortcode($atts, $content = null){
     
     $div_id=$collector->add_block($id);
     $html= '';
-    /* TRISH: put the id into single quotes */
     return "<div id='$div_id'>$html</div>";
 }
 
@@ -136,7 +135,6 @@ function activedemand_process_form_shortcode($atts, $content = null){
     $collector= ShortCodeCollector::get_instance();
     $div_id=$collector->add_form($id);
     $html= '';
-    /* TRISH: put the id into single quotes */
     return "<div id='$div_id'></div>";
 }
 
@@ -157,7 +155,6 @@ function match_replacement($matches){
             $function=__NAMESPACE__.'\activedemand_process_form_shortcode';
             break;
         default:
-            /* TRISH: set to return empty string ... why did it return nothing?  it would have returned nothing on fakecode */
             return "";
     }
     $args="array('id'=>$matches[3])";
@@ -272,6 +269,7 @@ function add_client_rider(){
                     cycleAndReplace(obj);
                     if(obj.popup) prefixThePopup(obj.popup);
                     if(obj.contact_id && typeof AD != 'undefined') AD.contact_id = obj.contact_id;
+                    if(typeof AD != 'undefined' && AD.setup_forms) AD.setup_forms();
                 });
             });  
 SCRIPT;
