@@ -4,7 +4,7 @@
  * Plugin Name: ActiveDEMAND
  * Plugin URI: https://www2.activedemand.com/s/Gnf5n
  * Description: Adds the <a href="https://www2.activedemand.com/s/SW5nU">ActiveDEMAND</a> tracking script to your website. Add custom popups, use shortcodes to embed webforms and dynamic website content.
- * Version: 0.1.66
+ * Version: 0.1.67
  * Author: JumpDEMAND Inc.
  * Author URI: https://www2.activedemand.com/s/SW5nU
  * License:GPL-2.0+
@@ -14,7 +14,7 @@
 namespace ActiveDemand;
 
 
-define(__NAMESPACE__.'\ACTIVEDEMAND_VER', '0.1.66');
+define(__NAMESPACE__.'\ACTIVEDEMAND_VER', '0.1.67');
 define(__NAMESPACE__."\PLUGIN_VENDOR", "ActiveDEMAND");
 define(__NAMESPACE__."\PLUGIN_VENDOR_LINK", "http://1jp.cc/s/SW5nU");
 define(__NAMESPACE__."\PREFIX", 'activedemand');
