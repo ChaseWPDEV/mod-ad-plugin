@@ -270,6 +270,7 @@ function add_client_rider(){
                     if(obj.popup) prefixThePopup(obj.popup);
                     if(obj.contact_id && typeof AD != 'undefined') AD.contact_id = obj.contact_id;
                     if(typeof AD != 'undefined' && AD.setup_forms) AD.setup_forms();
+                    if(typeof AD != 'undefined' && AD.setup_forms) AD.setup_ad_paging();
                 });
             });  
 SCRIPT;
