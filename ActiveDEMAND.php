@@ -4,7 +4,7 @@
  * Plugin Name: ActiveDEMAND
  * Plugin URI: https://www2.activedemand.com/s/Gnf5n
  * Description: Adds the <a href="https://www2.activedemand.com/s/SW5nU">ActiveDEMAND</a> tracking script to your website. Add custom popups, use shortcodes to embed webforms and dynamic website content.
- * Version: 0.1.67
+ * Version: 0.1.69
  * Author: JumpDEMAND Inc.
  * Author URI: https://www2.activedemand.com/s/SW5nU
  * License:GPL-2.0+
@@ -14,7 +14,7 @@
 namespace ActiveDemand;
 
 
-define(__NAMESPACE__.'\ACTIVEDEMAND_VER', '0.1.67');
+define(__NAMESPACE__.'\ACTIVEDEMAND_VER', '0.1.69');
 define(__NAMESPACE__."\PLUGIN_VENDOR", "ActiveDEMAND");
 define(__NAMESPACE__."\PLUGIN_VENDOR_LINK", "http://1jp.cc/s/SW5nU");
 define(__NAMESPACE__."\PREFIX", 'activedemand');
@@ -111,17 +111,23 @@ function activedemand_postHTML($url, $args, $timeout)
  * @return string $content with popup prefix
  */
 
-
-function activedemand_field_string($args, $api_key = '')
+function activedemand_api_key()
 {
-
     $options = get_option(PREFIX.'_options_field');
-    $fields_string = "";
     if (is_array($options) && array_key_exists(PREFIX.'_appkey', $options)) {
         $activedemand_appkey = $options[PREFIX."_appkey"];
     } else {
         $activedemand_appkey = "";
     }
+
+    return $activedemand_appkey;
+}
+
+function activedemand_field_string($args, $api_key = '')
+{
+
+    $fields_string = "";
+    $activedemand_appkey = activedemand_api_key();
 
     if ("" != $api_key) {
         $activedemand_appkey = $api_key;
@@ -253,12 +259,24 @@ function register_activedemand_settings()
     register_setting(PREFIX.'_options', PREFIX.'_server_showpopups');
     register_setting(PREFIX.'_options', PREFIX.'_show_tinymce');
     register_setting(PREFIX.'_options', PREFIX.'_server_side');
+    register_setting(PREFIX.'_options', PREFIX.'_script_url');
 }
 
 
 function activedemand_enqueue_scripts()
 {
-    wp_enqueue_script('ActiveDEMAND-Track', 'https://static.activedemand.com/public/javascript/ad.collect.min.js.jgz');
+    $script_url = get_option(PREFIX.'_script_url');
+    if (!isset($script_url) || "" == $script_url) {
+        $activedemand_appkey = activedemand_api_key();
+        if ("" != $activedemand_appkey) {
+            $script_url = activedemand_getHTML("https://api.activedemand.com/v1/script_url", 10);
+            update_option(PREFIX.'_script_url', $script_url);
+
+        } else {
+            $script_url = 'https://static.activedemand.com/public/javascript/ad.collect.min.js.jgz';
+        }
+    }
+    wp_enqueue_script('ActiveDEMAND-Track', $script_url);
 }
 
 
@@ -860,6 +878,10 @@ function activedemand_clean_url($url)
 
 
     if (TRUE == strpos($url, 'ad.collect.min.js.jgz'))
+    {
+        return "$url' async defer";
+    }
+    if (TRUE == strpos($url, 'ad_load.js'))
     {
         return "$url' async defer";
     }
