@@ -272,9 +272,10 @@ function activedemand_enqueue_scripts()
             $script_url = activedemand_getHTML("https://api.activedemand.com/v1/script_url", 10);
             update_option(PREFIX.'_script_url', $script_url);
 
-        } else {
-            $script_url = 'https://static.activedemand.com/public/javascript/ad.collect.min.js.jgz';
         }
+    }
+    if (!isset($script_url) || "" == $script_url) {
+        $script_url = 'https://static.activedemand.com/public/javascript/ad.collect.min.js.jgz';
     }
     wp_enqueue_script('ActiveDEMAND-Track', $script_url);
 }
