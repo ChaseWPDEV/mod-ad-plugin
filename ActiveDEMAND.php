@@ -4,7 +4,7 @@
  * Plugin Name: ActiveDEMAND
  * Plugin URI: https://www2.activedemand.com/s/Gnf5n
  * Description: Adds the <a href="https://www2.activedemand.com/s/SW5nU">ActiveDEMAND</a> tracking script to your website. Add custom popups, use shortcodes to embed webforms and dynamic website content.
- * Version: 0.1.69
+ * Version: 0.1.71
  * Author: JumpDEMAND Inc.
  * Author URI: https://www2.activedemand.com/s/SW5nU
  * License:GPL-2.0+
@@ -14,12 +14,13 @@
 namespace ActiveDemand;
 
 
-define(__NAMESPACE__.'\ACTIVEDEMAND_VER', '0.1.69');
+define(__NAMESPACE__.'\ACTIVEDEMAND_VER', '0.1.71');
 define(__NAMESPACE__."\PLUGIN_VENDOR", "ActiveDEMAND");
 define(__NAMESPACE__."\PLUGIN_VENDOR_LINK", "http://1jp.cc/s/SW5nU");
 define(__NAMESPACE__."\PREFIX", 'activedemand');
 
 include 'class-SCCollector.php';
+
 
 //--------------- AD update path --------------------------------------------------------------------------
 function activedemand_update()
@@ -259,18 +260,18 @@ function register_activedemand_settings()
     register_setting(PREFIX.'_options', PREFIX.'_server_showpopups');
     register_setting(PREFIX.'_options', PREFIX.'_show_tinymce');
     register_setting(PREFIX.'_options', PREFIX.'_server_side');
-    register_setting(PREFIX.'_options', PREFIX.'_script_url');
+    register_setting(PREFIX.'_options', PREFIX.'_v2_script_url');
 }
 
 
 function activedemand_enqueue_scripts()
 {
-    $script_url = get_option(PREFIX.'_script_url');
+    $script_url = get_option(PREFIX.'_v2_script_url');
     if (!isset($script_url) || "" == $script_url) {
         $activedemand_appkey = activedemand_api_key();
         if ("" != $activedemand_appkey) {
             $script_url = activedemand_getHTML("https://api.activedemand.com/v1/script_url", 10);
-            update_option(PREFIX.'_script_url', $script_url);
+            update_option(PREFIX.'_v2_script_url', $script_url);
 
         }
     }
@@ -882,7 +883,7 @@ function activedemand_clean_url($url)
     {
         return "$url' async defer";
     }
-    if (TRUE == strpos($url, 'ad_load.js'))
+    if (TRUE == strpos($url, '/load.js'))
     {
         return "$url' async defer";
     }
