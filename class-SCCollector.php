@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
@@ -11,14 +11,14 @@ namespace ActiveDemand;
 class ShortCodeCollector{
     public $url;
     public $server_side;
-	public $posts_processed=array();
+  	public $posts_processed=array();
     private $blocks=array();
     private $forms=array();
     private $show_popups;
     private $has_fired;
     private $guid_value;
     private $reply;
-    
+
     public static function get_instance(){
         static $instance=NULL;
         if(!isset($instance)){
@@ -26,10 +26,10 @@ class ShortCodeCollector{
         }
         return $instance;
     }
-    
+
     private function __construct() {
         $this->url='https://api.activedemand.com/v1/smart_blocks/show_all';
-        $options = get_option(PREFIX.'_options_field');
+        $options = retrieve_activedemand_options();
         $show = get_option(PREFIX.'_server_showpopups');
         $this->show_popups=(is_array($options) && array_key_exists(PREFIX.'_appkey', $options) && $show);
         $this->server_side=get_option(PREFIX.'_server_side', TRUE);
@@ -40,34 +40,34 @@ class ShortCodeCollector{
     }
     public function reset(){
         $this->has_fired=FALSE;
-        $blocks=array();
-	$forms=array();
+        $this->blocks=array();
+	      $this->forms=array();
     }
-    
+
     private function add_shortcode($id, $slug){
         $div='activedemand_'.$slug.'_'.count($this->$slug);
         $this->$slug[$div]=$id;
         return $div;
     }
-    
+
     public function has_content(){
         return (count($this->blocks) + count($this->forms)>0) || $this->show_popups;
     }
-    
+
     public function add_block($id){
         $div='activedemand_blocks_'.count($this->blocks);
         $this->blocks[$div]=$id;
         return $div;
     }
-    
+
     public function add_form($id){
         $div='activedemand_forms_'.count($this->forms);
         $this->forms[$div]=$id;
         return $div;
     }
-    
+
     public function make_args(){
-        $options = get_option(PREFIX.'_options_field');
+        $options = retrieve_activedemand_options();
         $activedemand_ignore_block_style = false;
         $activedemand_ignore_form_style = false;
         if (array_key_exists(PREFIX.'_ignore_block_style', $options)) {
@@ -83,13 +83,13 @@ class ShortCodeCollector{
             PREFIX.'_session_guid' => activedemand_get_cookie_value()
         );
     }
-    
+
     public function post_codes(){
-                
+
         if(!$this->server_side){
             throw new \Exception('Method must be Server Side for ShortCodeCollector to POST');
         }
-        
+
         $args= $this->make_args();
         $timeout=10;
         $response= activedemand_postHTML($this->url, $args, $timeout);
@@ -101,7 +101,7 @@ class ShortCodeCollector{
         if(!$this->has_fired) $this->post_codes();
         return $this->reply;
     }
-    
+
     public function get_codes(){
         return json_encode((object) array('forms'=> (object) $this->forms,
                                     'popups'=> $this->show_popups,
@@ -119,7 +119,7 @@ function activedemand_process_block_shortcode($atts, $content = null){
     //$id exists after this call.
     extract(shortcode_atts(array('id' => ''), $atts));
     $collector= ShortCodeCollector::get_instance();
-    
+
     $div_id=$collector->add_block($id);
     $html= '';
     return "<div id='$div_id'>$html</div>";
@@ -159,7 +159,7 @@ function match_replacement($matches){
     }
     $args="array('id'=>$matches[3])";
     return "<!-- mfunc " . W3TC_DYNAMIC_SECURITY . "echo ".$function."($args) -->"
-                . '<!--/mfunc ' . W3TC_DYNAMIC_SECURITY . ' -->'; 
+                . '<!--/mfunc ' . W3TC_DYNAMIC_SECURITY . ' -->';
 }
 
 function prefilter_content($content){
@@ -169,12 +169,12 @@ function prefilter_content($content){
     else{
 
         $shortcodes = array(PREFIX.'_form', PREFIX.'_block');
-        
+
         foreach ($shortcodes as $sc) {
             $pattern="/\[($sc).*?id=('|\")(\d+)('|\").*\]/";
             $content= preg_replace_callback($pattern, __NAMESPACE__.'\match_replacement', $content);
         }
-                
+
         return $content;
     }
 }
@@ -190,7 +190,7 @@ function footer_script(){
     if(!defined('W3TC_DYNAMIC_SECURITY') || !function_exists('w3tc_fragmentcache_start')){
         $process_code=process_shortcodes_script();
     } else{
-        
+
         $process_code='<!--mfunc '. W3TC_DYNAMIC_SECURITY . ' echo '.__NAMESPACE__.'\process_shortcodes_script() -->'
             . '<!--/mfunc '.W3TC_DYNAMIC_SECURITY. ' -->';
     }
@@ -203,9 +203,9 @@ add_action('wp_footer', __NAMESPACE__.'\footer_script', 900);
 function process_shortcodes_script(){
     $collector= ShortCodeCollector::get_instance();
     $server_side=$collector->server_side;
-    
+
     if(!$collector->has_content()) return;
-    
+
     $script=<<<SCRIPTTOP
             <script type="text/javascript">
             function cycleAndReplace(obj){
@@ -214,14 +214,14 @@ function process_shortcodes_script(){
                     var id="#"+property;
                     jQuery(id).html(obj[property]);
                 }
-            } 
+            }
             function prefixThePopup(popup){
                 jQuery(document).ready(function(){
                     jQuery("body").prepend(popup);
                 });
             }
 SCRIPTTOP;
-    
+
     if($server_side){
         $arr=json_decode($collector->get_reply(), TRUE);
         $json= json_encode($arr, JSON_HEX_TAG || JSON_HEX_QUOT);
@@ -238,7 +238,7 @@ SCRIPTBODY;
      $script.=<<<SCRIPTEND
             </script>
 SCRIPTEND;
-            
+
     return $script;
 }
 
@@ -272,7 +272,7 @@ function add_client_rider(){
                     if(typeof AD != 'undefined' && AD.setup_forms) AD.setup_forms();
                     if(typeof AD != 'undefined' && AD.setup_forms) AD.setup_ad_paging();
                 });
-            });  
+            });
 SCRIPT;
     return $script;
 }
