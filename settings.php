@@ -4,183 +4,98 @@
 
 namespace ActiveDemand;
 
+function activedemand_no_account_text(){
+  ?>
+  <h2>Your <?php echo PLUGIN_VENDOR?> Account</h2><br/>
+  You will require an <a href="<?php echo PLUGIN_VENDOR_LINK?>"><?php echo PLUGIN_VENDOR?></a> account to use this plugin. With an
+  <?php echo PLUGIN_VENDOR?> account you will be able
+                                                                       to:<br/>
+  <ul style="list-style-type:circle;  margin-left: 50px;">
+      <li>Build Webforms for your pages, posts, sidebars, etc</li>
+      <li>Build Dynamic Content Blocks for your pages, posts, sidebars, etc</li>
+      <ul style="list-style-type:square;  margin-left: 50px;">
+          <li>Dynamically swap content based on GEO-IP data</li>
+          <li>Automatically change banners based on campaign duration</li>
+          <li>Stop showing forms to people who have already subscribed</li>
+      </ul>
+      <li>Deploy Popups and Subscriber bars</li>
+      <li>Automatically send emails to those who fill out your web forms</li>
+      <li>Automatically send emails to you when a form is filled out</li>
+      <li>Send email campaigns to your subscribers</li>
+      <li>Build your individual blog posts and have them automatically be posted on a schedule</li>
+      <li>Bulk import blog posts and have them post on a defined set of times and days</li>
+  </ul>
+
+  <div>
+      <h3>To sign up for your <?php echo PLUGIN_VENDOR?> account, click <a
+                  href="<?php echo PLUGIN_VENDOR_LINK?>"><strong>here</strong></a>
+      </h3>
+
+      <p>
+          You will need to enter your application key in order to enable the form shortcodes. Your can find
+          your
+          <?php echo PLUGIN_VENDOR?> API key in your account settings:
+
+      </p>
+
+      <p>
+          <img src="<?php echo get_base_url() ?>/images/Screenshot2.png"/>
+      </p>
+  </div>
+  <?php
+}
+
+function activedemand_carts($options){
+?>
+<div class="tab">
+  <button class="tablinks active" onclick="adShowTab(event, 'automation')">Automation</button>
+  <button class="tablinks" onclick="adShowTab(event, 'cart_recovery')">Cart Recovery</button>
+</div>
+
+<div class="tabcontent" id="automation" style="display:block;"><?php FormLinker::linked_forms_page();?></div>
+<div class="tabcontent" id="cart_recovery" style="display:none;"><?php activedemand_stale_cart_form($options);?></div>
+<?php
+}
 
 function activedemand_stale_cart_form($options)
 {
-    $options = retrieve_activedemand_options();
     $activedemand_form_id = isset($options[PREFIX."_woocommerce_stalecart_form_id"]) ?
     $options[PREFIX."_woocommerce_stalecart_form_id"] : 0;
     $hours = isset($options['woocommerce_stalecart_hours']) ? $options['woocommerce_stalecart_hours'] : 2;
 
     ?>
-    <tr valign="top">
-    <th scope="row">WooCommerce Carts:</th>
-    <td><?php
-        echo FormLinker::form_list_dropdown(
-          PREFIX."_woocommerce_options_field[".PREFIX."_woocommerce_stalecart_form_id]",
-          [],
-          $activedemand_form_id
-        );
-
-        ?>
-        <div style="font-size: small;"><strong>Note:</strong> The selected <?php echo PLUGIN_VENDOR?> Form must
-            have <strong>[First
+    <form method="post" action="options.php">
+      <?php settings_fields(PREFIX.'_woocommerce_options'); ?>
+      <table>
+          <tr valign="top">
+            <th scope="row">WooCommerce Carts:</th>
+            <td><?php
+            echo FormLinker::form_list_dropdown(
+              PREFIX."_woocommerce_options_field[".PREFIX."_woocommerce_stalecart_form_id]",
+              [],
+              $activedemand_form_id
+            );?>
+            <div style="font-size: small;"><strong>Note:</strong> The selected <?php echo PLUGIN_VENDOR?> Form must
+              have <strong>[First
                 Name]</strong>-<strong>[Last Name]</strong>-<strong>[Email
-                Address*]</strong>-<strong>[Product Data]</strong>
-            as the first 4 fields.
-            Ensure that the [Product Data] field is a text area.
-        </div>
-        <br/>
+                  Address*]</strong>-<strong>[Product Data]</strong>
+                  as the first 4 fields.
+                  Ensure that the [Product Data] field is a text area.
+                </div>
+            </td></tr>
+            <tr><th>
+                  Send Stale carts to <?php echo PLUGIN_VENDOR?> after it has sat for:</th>
+                    <td>
+                    <input type="number" min="1"
+                    name="<?php echo PREFIX?>_woocommerce_options_field[woocommerce_stalecart_hours]"
+                    value="<?php echo $hours; ?>"> hours
 
-        Send Stale carts to <?php echo PLUGIN_VENDOR?> after it has sat for:<br>
-        <input type="number" min="1"
-               name="<?php echo PREFIX?>_woocommerce_options_field[woocommerce_stalecart_hours]"
-               value="<?php echo $hours; ?>"> hours
-    </td>
+                  </td></tr>
+    </table>
+    <input type="submit" value="Save" class="button-primary" style="float:right;">
+  </form>
     <?php
 
-}
-
-function activedemand_link_event_form(){
-  settings_fields(PREFIX.'_woocommerce_linked_actions');
-  $linked_actions=\is_array(get_option(PREFIX.'_wc_actions_forms')) ?  get_option(PREFIX.'_wc_actions_forms') : array();
-
-  //cycle through the actions already $linked_actions
-
-  //onclick present a modal popup to edit the Options
-
-  //provide a new action link buttons
-
-}
-
-function activedemand_carts($options){
-  if (array_key_exists(PREFIX.'_woo_commerce_order_form_id', $options)) {
-      $activedemand_woo_commerce_order_form_id = $options[PREFIX."_woo_commerce_order_form_id"];
-
-  } else {
-      $activedemand_woo_commerce_order_form_id = 0;
-  }
-
-  if (array_key_exists(PREFIX.'_woo_commerce_use_status', $options)) {
-
-
-      $activedemand_woo_commerce_use_status = $options[PREFIX."_woo_commerce_use_status"];
-      if (!array_key_exists("pending", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["pending"] = FALSE;
-      }
-      if (!array_key_exists("processing", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["processing"] = FALSE;
-      }
-      if (!array_key_exists("on-hold", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["on-hold"] = FALSE;
-      }
-      if (!array_key_exists("completed", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["completed"] = FALSE;
-      }
-      if (!array_key_exists("refunded", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["refunded"] = FALSE;
-      }
-      if (!array_key_exists("cancelled", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["cancelled"] = FALSE;
-      }
-      if (!array_key_exists("failed", $activedemand_woo_commerce_use_status)) {
-          $activedemand_woo_commerce_use_status["failed"] = FALSE;
-      }
-
-
-  } else {
-
-      $activedemand_woo_commerce_use_status = array(
-          "pending" => FALSE,
-          "processing" => FALSE,
-          "on-hold" => FALSE,
-          "completed" => TRUE,
-          "refunded" => FALSE,
-          "cancelled" => FALSE,
-          "failed" => FALSE
-
-      );
-
-      $options[PREFIX."_woo_commerce_use_status"] = $activedemand_woo_commerce_use_status;
-  }
-  update_option(PREFIX.'_options_field', $options);
-
-  settings_fields(PREFIX.'_woocommerce_options');
-  ?>
-  <table>
-  <tr valign="top">
-      <th scope="row">On WooCommerce Order:</th>
-      <td><?php
-          echo FormLinker::form_list_dropdown(PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_order_form_id]",[], $activedemand_woo_commerce_order_form_id);
-
-          if (0 != $activedemand_woo_commerce_order_form_id) {
-              ?>
-              <div style="font-size: small;"><strong>Note:</strong> The selected <?php echo PLUGIN_VENDOR?> Form must
-                  have <strong>[First
-                      Name]</strong>-<strong>[Last Name]</strong>-<strong>[Email
-                      Address*]</strong>-<strong>[Order
-                      Value]</strong>-<strong>[Order State Change]</strong>-<strong>[Order ID]</strong> as
-                  the
-                  first 6 fields. Ensure that only the [Email Address*] field is required.
-              </div>
-              <br/>
-              Submit Forms to <?php echo PLUGIN_VENDOR?> when an WooCommerce order status changes to:
-              <table class="wootbl" style="margin-left: 25px">
-                  <tr>
-                      <th>Pending</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][pending]"; ?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['pending'], 1); ?> />
-                      </td>
-                  </tr>
-                  <tr>
-                      <th>Processing</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][processing]"; ?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['processing'], 1); ?> />
-                      </td>
-                  </tr>
-                  <tr>
-                      <th>On Hold</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][on-hold]";?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['on-hold'], 1); ?> />
-                      </td>
-                  </tr>
-                  <tr>
-                      <th>Completed</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][completed]";?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['completed'], 1); ?> />
-                      </td>
-                  </tr>
-                  <tr>
-                      <th>Refunded</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][refunded]";?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['refunded'], 1); ?> />
-                      </td>
-                  </tr>
-                  <tr>
-                      <th>Cancelled</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][cancelled]";?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['cancelled'], 1); ?> />
-                      </td>
-                  </tr>
-                  <tr>
-                      <th>Failed</th>
-                      <td><input type="checkbox"
-                                 name="<?php echo PREFIX."_woocommerce_options_field[".PREFIX."_woo_commerce_use_status][failed]";?>
-                                 value="1" <?php checked($activedemand_woo_commerce_use_status['failed'], 1); ?> />
-                      </td>
-                  </tr>
-
-              </table>
-          <?php } ?>
-      </td>
-
-      <?php activedemand_stale_cart_form($options);
 }
 
 function activedemand_plugin_options()
@@ -189,7 +104,7 @@ function activedemand_plugin_options()
 
     $options = retrieve_activedemand_options();
 
-    $form_xml = "";
+    $block_xml=$form_xml = "";
 
     if (!array_key_exists(PREFIX.'_appkey', $options)) {
         $options[PREFIX.'_appkey'] = "";
@@ -200,7 +115,8 @@ function activedemand_plugin_options()
     if ("" != $activedemand_appkey) {
         //get Forms
         $form_xml=FormLinker::load_form_xml();
-
+        $url = "https://api.activedemand.com/v1/smart_blocks.xml";
+        $str = activedemand_getHTML($url, 10);
         $block_xml = simplexml_load_string($str);
       }
 
@@ -212,7 +128,6 @@ function activedemand_plugin_options()
     }
 
     ?>
-
 
     <div class="wrap">
         <img src="<?php echo get_base_url() ?>/images/ActiveDEMAND-Transparent.png"/>
@@ -230,10 +145,7 @@ function activedemand_plugin_options()
             <?php endif;?>
         </h2>
 
-        <form method="post" action="options.php">
-
         <?php
-        wp_nonce_field('update-options');
         switch($form_view):
         case 'woo':
           activedemand_carts($options);
@@ -346,46 +258,13 @@ function activedemand_plugin_options()
 
           <?php break;
           default:
-          settings_fields(PREFIX.'_options');?>
+          ?>
+          <form method="post" action="options.php">
+          <?php settings_fields(PREFIX.'_options'); ?>
 
-        <?php if ("" == $activedemand_appkey || !isset($activedemand_appkey)) { ?>
-            <h2>Your <?php echo PLUGIN_VENDOR?> Account</h2><br/>
-            You will require an <a href="<?php echo PLUGIN_VENDOR_LINK?>"><?php echo PLUGIN_VENDOR?></a> account to use this plugin. With an
-            <?php echo PLUGIN_VENDOR?> account you will be able
-                                                                                 to:<br/>
-            <ul style="list-style-type:circle;  margin-left: 50px;">
-                <li>Build Webforms for your pages, posts, sidebars, etc</li>
-                <li>Build Dynamic Content Blocks for your pages, posts, sidebars, etc</li>
-                <ul style="list-style-type:square;  margin-left: 50px;">
-                    <li>Dynamically swap content based on GEO-IP data</li>
-                    <li>Automatically change banners based on campaign duration</li>
-                    <li>Stop showing forms to people who have already subscribed</li>
-                </ul>
-                <li>Deploy Popups and Subscriber bars</li>
-                <li>Automatically send emails to those who fill out your web forms</li>
-                <li>Automatically send emails to you when a form is filled out</li>
-                <li>Send email campaigns to your subscribers</li>
-                <li>Build your individual blog posts and have them automatically be posted on a schedule</li>
-                <li>Bulk import blog posts and have them post on a defined set of times and days</li>
-            </ul>
-
-            <div>
-                <h3>To sign up for your <?php echo PLUGIN_VENDOR?> account, click <a
-                            href="<?php echo PLUGIN_VENDOR_LINK?>"><strong>here</strong></a>
-                </h3>
-
-                <p>
-                    You will need to enter your application key in order to enable the form shortcodes. Your can find
-                    your
-                    <?php echo PLUGIN_VENDOR?> API key in your account settings:
-
-                </p>
-
-                <p>
-                    <img src="<?php echo get_base_url() ?>/images/Screenshot2.png"/>
-                </p>
-            </div>
-        <?php } ?>
+        <?php if ("" == $activedemand_appkey || !isset($activedemand_appkey))
+          activedemand_no_account_text();
+        ?>
 
             <h3><?php echo PLUGIN_VENDOR?> Plugin Options</h3>
             <table class="form-table">
@@ -433,9 +312,6 @@ function activedemand_plugin_options()
                 <?php } ?>
 
                 <?php
-                //get Blocks
-                $url = "https://api.activedemand.com/v1/smart_blocks.xml";
-                $str = activedemand_getHTML($url, 10);
 
                 if ("" != $block_xml) { ?>
                     <tr valign="top">
@@ -445,66 +321,99 @@ function activedemand_plugin_options()
                                    value="1" <?php checked($options[PREFIX.'_ignore_block_style'], 1); ?> />
                         </td>
                     </tr>
-
                 <?php } ?>
-
+              </table>
+                <input type="submit" value="Save" class="button-primary" style="float:right;">
+              </form>
                 <?php endswitch; ?>
+          <?php activedemand_settings_styles();?>
+<?php }
 
-                </tr>
-                <tr>
-                    <td></td>
-                    <?php if($form_view !=='content'):?>
-                    <td>
-                        <p class="submit">
-                            <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>"/>
-                        </p>
-                    </td>
-                    <?php endif;?>
-                </tr>
-            </table>
-        </form>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-    </div>
-    <?php
+
+function activedemand_settings_styles()
+{
+  ?>
+  <style type="text/css">
+  * {box-sizing: border-box}
+
+  /* Style the tab */
+  .tab {
+      float: left;
+      border: 1px solid #ccc;
+      background-color: #f1f1f1;
+      width: 30%;
+  }
+
+  .tab, .tabcontent{
+    height:600px;
+  }
+
+  /* Style the buttons that are used to open the tab content */
+  .tab button {
+      display: block;
+      background-color: inherit;
+      color: black;
+      padding: 22px 16px;
+      width: 100%;
+      border: none;
+      outline: none;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.3s;
+  }
+
+  /* Change background color of buttons on hover */
+  .tab button:hover {
+      background-color: #ddd;
+  }
+
+  /* Create an active/current "tab button" class */
+  .tab button.active {
+      background-color: #ccc;
+  }
+
+  /* Style the tab content */
+  .tabcontent {
+      float: left;
+      padding: 0px 12px;
+      border: 1px solid #ccc;
+      width: 70%;
+      border-left: none;
+  }
+      table.wootbl th {
+
+          padding: 5px;
+      }
+
+      table.wootbl td {
+
+          padding: 5px;
+      }
+  </style>
+
+  <style scoped="scoped" type="text/css">
+      table#shrtcodetbl {
+          border: 1px solid black;
+      }
+
+      table#shrtcodetbl tr {
+          background-color: #ffffff;
+      }
+
+      table#shrtcodetbl tr:nth-child(even) {
+          background-color: #eeeeee;
+      }
+
+      table#shrtcodetbl tr td {
+          padding: 10px;
+
+      }
+
+      table#shrtcodetbl th {
+          color: white;
+          background-color: black;
+          padding: 10px;
+      }
+  </style>
+  <?php
 }
- ?>
-
- <style type="text/css">
-     table.wootbl th {
-
-         padding: 5px;
-     }
-
-     table.wootbl td {
-
-         padding: 5px;
-     }
- </style>
- <style scoped="scoped" type="text/css">
-     table#shrtcodetbl {
-         border: 1px solid black;
-     }
-
-     table#shrtcodetbl tr {
-         background-color: #ffffff;
-     }
-
-     table#shrtcodetbl tr:nth-child(even) {
-         background-color: #eeeeee;
-     }
-
-     table#shrtcodetbl tr td {
-         padding: 10px;
-
-     }
-
-     table#shrtcodetbl th {
-         color: white;
-         background-color: black;
-         padding: 10px;
-     }
- </style>
- <?php ?>

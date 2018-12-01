@@ -13,7 +13,7 @@ class ShortCodeCollector{
     public $server_side;
   	public $posts_processed=array();
     private $blocks=array();
-    private $forms=array();
+    public $forms=array();
     private $show_popups;
     private $has_fired;
     private $guid_value;

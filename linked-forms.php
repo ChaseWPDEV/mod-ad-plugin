@@ -19,6 +19,7 @@ class FormLinker{
     'Order Cancelled'=>'cancelled_shop_order',
     'Order Refunder'=>'refunded_shop_order'
   ];
+  public static $last_response;
 
   public static $form_xml=NULL;
 
@@ -33,8 +34,11 @@ class FormLinker{
 
   public static function build_full_linker(){
     self::load_form_xml();
-    $ids=array_map(function($a){return (int) $a->id;}, self::$form_xml->children());
-
+    $arr=(array) self::$form_xml->children();
+    $ids=array();
+    foreach($arr as $v){
+      $ids[]=(int) $v->id;
+    }
      return new FormLinker($ids);
   }
 
@@ -45,9 +49,9 @@ class FormLinker{
     foreach($atts as $k=>$v){
       $output.=" $k=\"$v\"";
     }
-    $output.='><option';
-    if(!isset($selected) || $selected==0) $output.= 'selected>';
-    $output.='>None</option>';
+    $output.='><option value="0"';
+    if(!isset($selected) || $selected==0) $output.= ' selected>';
+    $output.='None</option>';
     foreach(self::$form_xml->children() as $child){
       $id=(int) $child->id;
       $output.="<option value=\"$id\"";
@@ -66,29 +70,43 @@ class FormLinker{
     }
     $output.=">";
     foreach($arr as $name=>$hook){
+      $url=add_query_arg('form_mapper_show_nonce', wp_create_nonce($hook.'-show'),
+          add_query_arg('action', 'show_form_mapper',
+          add_query_arg('action_hook', $hook,
+          admin_url('admin-ajax.php'))));
+      if(isset($setting[$hook]) && $setting[$hook]){
+        $id=$setting[$hook];
+        $style="display:block;";
+      } else{
+        $id=NULL;
+        $style="display:none;";
+      }
+      $style.='text-decoration:none;color:black;';
       $output.="<tr><td>$name</td>"
-      ."<td>".self::form_list_dropdown(PREFIX."_wc_actions_forms[$hook]",
-        ['class'=>'ad_form_link_dropdown'],
-          isset($setting[$hook]) ? $setting[$hook] : NULL)."</td>"
-          ."<td><div>Pencil Icon"
-          .wp_nonce_field($hook.'-reset','form_mapper_reset_nonce', true, false)
-          ."</td></tr>";
+      ."<td>"
+      .self::form_list_dropdown(PREFIX."_wc_actions_forms[$hook]",
+        ['class'=>'ad-formlink-dropdown'], $id)
+      .wp_nonce_field($hook.'-reset',"form_mapper_reset_$hook", true, false)
+      ."</td>"
+      .'<td><a class="ad-edit-linkedform '.$hook.'" style="'.$style.'"'
+      .'href="'.$url
+      .' .ad_form_mapper" data-featherlight="ajax"><span class="dashicons dashicons-edit"></span></a>'
+      ."</td></tr>";
         }
-      $ouput.="</table>";
+      $output.="</table>";
       return $output;
   }
 
   public static function linked_forms_page(){
 
-    if(!is_array($setting)) $setting=array();
     ?>
     <form method="post" action="options.php">
       <?php settings_fields(PREFIX.'_woocommerce_linked_actions'); ?>
       <h2>Customer Profile Actions</h2>
-      <?php echo self::form_link_table(self::$$customer_actions, ['class'=>'customer_form_table']);?>
+      <?php echo self::form_link_table(self::$customer_actions, ['class'=>'customer_form_table']);?>
       <h2>WooCommerce Order Status Changes</h2>
       <?php echo self::form_link_table(self::$order_status_actions, ['class'=>'order_form_table']);?>
-      <input type="submit" value="Save">
+      <input type="submit" value="Save" class="button-primary">
     </form>
     <?php
   }
@@ -127,7 +145,9 @@ class FormLinker{
 
         if(is_wp_error($response)){
           $msg=$response->get_error_message();
-          new WP_Error($msg);
+          new \WP_Error($msg);
+        } else{
+          self::$last_response=$response;
         }
       }, 15, 1);
     }
@@ -180,19 +200,20 @@ class FormLinker{
         $collector->add_form($id);
       }
     } else{
-      $collector->add_form($id);
+      $collector->add_form($ids);
     }
-
     $reply=(array) \json_decode($collector->get_reply());
-
     foreach($reply as $form){
       $matches=[];
-      if(\preg_match('/<form.*form>/s',(string) $form,$matches));
+      if(\preg_match('/<form.*form>/s',(string) $form,$matches)){
       $dom= new \DOMDocument();
       $dom->loadHTML($matches[0]);
       $id=$this->get_form_id($dom);
       $labels=$this->get_form_labels($dom);
       $this->forms[$id]=$labels;
+    } else {
+      new \WP_Error('No Form Found in AD Reply');
+    }
     }
 
 }
@@ -212,9 +233,14 @@ class FormLinker{
 
   function get_form_id($form_dom){
     $matches=array();
-    $action=$form_dom->getElementsByTagName('form')[0]->attributes->getNamedItem('action')->nodeValue;
-    \preg_match('/\d+$/', $action, $matches);
-    return $matches[0];
+    $form_attributes=$form_dom->getElementsByTagName('form')[0]->attributes;
+    if(isset($form_attributes)){
+      $action=$form_attributes->getNamedItem('action')->nodeValue;
+      \preg_match('/\d+$/', $action, $matches);
+      return $matches[0];
+    } else{
+      new \WP_Error('Form DOM returned '. print_r($form_dom->getElementsByTagName['form'], true));
+  }
   }
 
   function get_form_field_dropdown($id, $name, $selected=NULL){
@@ -233,15 +259,17 @@ class FormLinker{
     $labels=$this->forms[$id];
     $output="<table>";
     foreach($labels as $name=>$content){
-      $selected=(!empty($setting) && isset($setting[$name])) ?
+      $selected=(!empty($setting) && isset($setting['map'][$name])) ?
         $setting['map'][$name] : NULL;
       $output.="<tr><td>$content</td><td>";
-      $output.="<select name=\"map[$name]\">";
+      $output.="<select name=\"map[$name]\"><option disabled";
+      if(!isset($selected)) $output.=' selected';
+      $output.="></option>";
 
       foreach($options as $option=>$description){
-        $output.="<option value=\$option\"";
+        $output.="<option value=\"$option\"";
         if($option===$selected) $output.=' selected';
-        $option.=">$description</option>";
+        $output.=">$description</option>";
       }
       $output.='</select>';
       $output.="</td></tr>";
@@ -261,7 +289,7 @@ class FormLinker{
     return '<form class="ad_form_mapper '.$action.'_mapper">'
       . wp_nonce_field($action.'-'.$id.'-update', 'form_mapper_update_nonce', true, false)
       . $this->form_field_mapper($id, $options, $setting)
-      .'<input type="button" value="Save" onclick="ad_form_linker_update('.$id.', '.$$action.');">'
+      .'<input type="button" value="Save" onclick="ad_form_linker_update(event, '.$id.', \''.$action.'\');">'
       .'</form>';
   }
 
@@ -271,40 +299,66 @@ add_action('init', array(__NAMESPACE__.'\FormLinker', 'initialize_hooks'));
 
 add_action('wp_ajax_reset_ad_form_linkage', __NAMESPACE__.'\ajax_reset_action_form');
 add_action('wp_ajax_update_ad_form_linkage', __NAMESPACE__.'\ajax_update_action_form');
-
+add_action ('wp_ajax_show_form_mapper', __NAMESPACE__.'\ajax_show_form_mapper');
 
 function ajax_reset_action_form(){
-  //TODO:validate_ajax_nonce
+  $action=\filter_var($_POST['action_hook'], \FILTER_SANITIZE_STRING);
+  check_ajax_referer($action.'-reset', 'form_mapper_reset_nonce');
 
-  $action=\filter_var($_POST['action_hook'], FILTER_SANITIZE_STRING);
-  $id=\filter_var($_POST['form_id'], FILTER_SANITIZE_NUMBER);
+  $id=\filter_var($_POST['form_id'], \FILTER_SANITIZE_NUMBER_INT);
 
   check_ajax_referer($action.'-reset', 'form_mapper_reset_nonce');
-  update_option(PREFIX."_form_action", ['id'=>$id]);
+  if($id===0){
+    delete_option(PREFIX."_form_$action");
+    echo "Form Deleted";
+  } else if(update_option(PREFIX."_form_$action", ['id'=>$id])){
+    echo \json_encode([$action=>$id]);
+  } else{
+    new \WP_Error("Could not update $action to $id");
+  }
+  wp_die();
 }
 
 function ajax_update_action_form(){
 
-  $action=\filter_var($_POST['action_hook'], FILTER_SANITIZE_STRING);
-  $id=\filter_var($_POST['form_id'], FILTER_SANITIZE_NUMBER);
+  $action=\filter_var($_POST['action_hook'], \FILTER_SANITIZE_STRING);
+  $id=\filter_var($_POST['form_id'], \FILTER_SANITIZE_NUMBER_INT);
 
   check_ajax_referer($action.'-'.$id.'-update', 'form_mapper_update_nonce');
-  $map=(array) \filter_var($_POST['map'], FILTER_SANITIZE_STRING);
 
-  update_option(PREFIX."_form_action", [
-    'id'=>$id,
-    'map'=>$map]);
+  $map=array();
+  foreach($_POST['map'] as $k=>$v){
+    $map[$k.']']=$v;
+  }
+
+
+  $option=['id'=>$id,'map'=>$map];
+
+  if(update_option(PREFIX."_form_$action", $option)){
+      $option['action']=$action;
+      echo \json_encode($option);
+    } else{
+      new \WP_Error("Could not update $action");
+    }
+    wp_die();
 }
 
 function ajax_show_form_mapper(){
-  //TODO:validate_ajax_nonce
+  $action=\filter_var($_GET['action_hook'], \FILTER_SANITIZE_STRING);
+  check_ajax_referer($action.'-show', 'form_mapper_show_nonce');
 
-  $id=\filter_var($_POST['form_id'], FILTER_SANITIZE_NUMBER);
-  $action=\filter_var($_POST['action_hook'], FILTER_SANITIZE_STRING);
+  $setting=get_option(PREFIX."_form_$action");
+  $id=$setting['id'];
   $linker=new FormLinker($id);
   echo $linker->form_mapper($id, $action);
   wp_die();
 }
 
+add_action('admin_enqueue_scripts', function(){
+  wp_enqueue_script('featherlight', plugins_url('/includes/featherlight/featherlight.min.js',__FILE__), ['jquery']);
+  wp_enqueue_style('featherlight-style', plugins_url('/includes/featherlight/featherlight.min.css',__FILE__) );
+  wp_enqueue_script('activedemand-formlinker', plugins_url('/includes/activedemand-admin-formlinker.js', __FILE__), ['jquery']);
+
+});
 
  ?>
