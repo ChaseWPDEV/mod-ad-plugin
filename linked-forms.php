@@ -17,7 +17,7 @@ class FormLinker{
     'Order Processing'=>'processing_shop_order',
     'Order Completed'=>'completed_shop_order',
     'Order Cancelled'=>'cancelled_shop_order',
-    'Order Refunder'=>'refunded_shop_order'
+    'Order Refunded'=>'refunded_shop_order'
   ];
   public static $last_response;
 
