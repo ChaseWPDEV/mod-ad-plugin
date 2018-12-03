@@ -7,21 +7,26 @@ class FormLinker{
 
   public $forms=array();
 
-  public static $customer_actions=[
-    'Customer Created'=>'woocommerce_created_customer',
-    'Customer Updated'=>'profile_updated'
-  ];
+  public static $customer_actions=array();
 
-  public static $order_status_actions=[
-    'Order Created'=>'new_shop_order',
-    'Order Processing'=>'processing_shop_order',
-    'Order Completed'=>'completed_shop_order',
-    'Order Cancelled'=>'cancelled_shop_order',
-    'Order Refunded'=>'refunded_shop_order'
-  ];
+  public static $order_status_actions=array();
   public static $last_response;
-
   public static $form_xml=NULL;
+
+  public static function initialize_class_vars(){
+    self::$customer_actions=array(
+      'Customer Created'=>'woocommerce_created_customer',
+      'Customer Updated'=>'profile_updated'
+    );
+
+    self::$order_status_actions=array(
+      'Order Created'=>'new_shop_order',
+      'Order Processing'=>'processing_shop_order',
+      'Order Completed'=>'completed_shop_order',
+      'Order Cancelled'=>'cancelled_shop_order',
+      'Order Refunded'=>'refunded_shop_order'
+    );
+  }
 
   public static function load_form_xml(){
     if(!isset(self::$form_xml) || !is_a(self::$form_xml, 'SimpleXMLElement')){
@@ -161,7 +166,10 @@ class FormLinker{
         $id=$setting['id'];
         $map=$setting['map'];
         $data=array();
-        $user=get_userdata(get_current_user_id());
+        $order=new WC_Order($post->ID);
+        $user_id=$order->user_id;
+        if(!($user_id)) return;
+        $user=get_userdata($user_id);
         foreach($map as $name=>$arg){
           switch($arg){
             case 'username':
@@ -204,7 +212,7 @@ class FormLinker{
     }
     $reply=(array) \json_decode($collector->get_reply());
     foreach($reply as $form){
-      $matches=[];
+      $matches=array();
       if(\preg_match('/<form.*form>/s',(string) $form,$matches)){
       $dom= new \DOMDocument();
       $dom->loadHTML($matches[0]);
@@ -255,7 +263,7 @@ class FormLinker{
     return $output;
   }
 
-  function form_field_mapper($id,$options,$setting=[]){
+  function form_field_mapper($id,$options,$setting=array()){
     $labels=$this->forms[$id];
     $output="<table>";
     foreach($labels as $name=>$content){
@@ -280,12 +288,12 @@ class FormLinker{
 
   function form_mapper($id, $action){
     $setting=get_option(PREFIX."_form_$action") ? get_option(PREFIX."_form_$action") : array();
-    $options=[
+    $options=array(
       'username'=>'User Name',
       'user_firstname'=>'First Name',
       'user_lastname'=>'Last Name',
       'user_email'=>'Email'
-    ];
+    );
     return '<form class="ad_form_mapper '.$action.'_mapper">'
       . wp_nonce_field($action.'-'.$id.'-update', 'form_mapper_update_nonce', true, false)
       . $this->form_field_mapper($id, $options, $setting)
@@ -296,6 +304,7 @@ class FormLinker{
 }
 
 add_action('init', array(__NAMESPACE__.'\FormLinker', 'initialize_hooks'));
+add_action('plugins_loaded', array(__NAMESPACE__.'\FormLinker', 'initialize_class_vars'));
 
 add_action('wp_ajax_reset_ad_form_linkage', __NAMESPACE__.'\ajax_reset_action_form');
 add_action('wp_ajax_update_ad_form_linkage', __NAMESPACE__.'\ajax_update_action_form');
@@ -332,7 +341,7 @@ function ajax_update_action_form(){
   }
 
 
-  $option=['id'=>$id,'map'=>$map];
+  $option=array('id'=>$id,'map'=>$map);
 
   if(update_option(PREFIX."_form_$action", $option)){
       $option['action']=$action;
