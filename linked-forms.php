@@ -105,14 +105,11 @@ class FormLinker{
   public static function linked_forms_page(){
 
     ?>
-    <form method="post" action="options.php">
       <?php settings_fields(PREFIX.'_woocommerce_linked_actions'); ?>
       <h2>Customer Profile Actions</h2>
       <?php echo self::form_link_table(self::$customer_actions, ['class'=>'customer_form_table']);?>
       <h2>WooCommerce Order Status Changes</h2>
       <?php echo self::form_link_table(self::$order_status_actions, ['class'=>'order_form_table']);?>
-      <input type="submit" value="Save" class="button-primary">
-    </form>
     <?php
   }
 
@@ -366,7 +363,7 @@ function ajax_show_form_mapper(){
 add_action('admin_enqueue_scripts', function(){
   wp_enqueue_script('featherlight', plugins_url('/includes/featherlight/featherlight.min.js',__FILE__), ['jquery']);
   wp_enqueue_style('featherlight-style', plugins_url('/includes/featherlight/featherlight.min.css',__FILE__) );
-  wp_enqueue_script('activedemand-formlinker', plugins_url('/includes/activedemand-admin-formlinker.js', __FILE__), ['jquery']);
+  wp_enqueue_script('activedemand-formlinker', plugins_url('/includes/activedemand-admin-formlinker.js', __FILE__), ['jquery'], '0.1');
 
 });
 

@@ -47,13 +47,16 @@ function activedemand_no_account_text(){
 
 function activedemand_carts($options){
 ?>
+
 <div class="tab">
   <button class="tablinks active" onclick="adShowTab(event, 'automation')">Automation</button>
   <button class="tablinks" onclick="adShowTab(event, 'cart_recovery')">Cart Recovery</button>
 </div>
-
-<div class="tabcontent" id="automation" style="display:block;"><?php FormLinker::linked_forms_page();?></div>
-<div class="tabcontent" id="cart_recovery" style="display:none;"><?php activedemand_stale_cart_form($options);?></div>
+<form method="post" action="options.php" class="ad-settings-form">
+  <div class="tabcontent" id="automation" style="display:block;"><?php FormLinker::linked_forms_page();?></div>
+  <div class="tabcontent" id="cart_recovery" style="display:none;"><?php activedemand_stale_cart_form($options);?></div>
+  <input type="submit" value="Save" class="button-primary" style="float:right;">
+</form>
 <?php
 }
 
@@ -64,7 +67,6 @@ function activedemand_stale_cart_form($options)
     $hours = isset($options['woocommerce_stalecart_hours']) ? $options['woocommerce_stalecart_hours'] : 2;
 
     ?>
-    <form method="post" action="options.php">
       <?php settings_fields(PREFIX.'_woocommerce_options'); ?>
       <table>
           <tr valign="top">
@@ -92,8 +94,7 @@ function activedemand_stale_cart_form($options)
 
                   </td></tr>
     </table>
-    <input type="submit" value="Save" class="button-primary" style="float:right;">
-  </form>
+
     <?php
 
 }
@@ -259,7 +260,7 @@ function activedemand_plugin_options()
           <?php break;
           default:
           ?>
-          <form method="post" action="options.php">
+          <form method="post" action="options.php" class="ad-settings-form">
           <?php settings_fields(PREFIX.'_options'); ?>
 
         <?php if ("" == $activedemand_appkey || !isset($activedemand_appkey))

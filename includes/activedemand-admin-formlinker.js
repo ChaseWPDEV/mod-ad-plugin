@@ -32,6 +32,16 @@ jQuery(document).ready(function($){
       }
     });
   });
+
+  $('.ad-settings-form input, .ad-settings-form select').change(function(){
+    window.onbeforeunload = function() {
+    return true;
+    };
+  });
+
+  $('.ad-settings-form input[type="submit"]').click(function(){
+    window.onbeforeunload = null;
+  });
 });
 
 function adShowTab(evt, tabName){
