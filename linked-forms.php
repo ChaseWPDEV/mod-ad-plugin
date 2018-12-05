@@ -90,7 +90,7 @@ class FormLinker{
       $output.="<tr><td>$name</td>"
       ."<td>"
       .self::form_list_dropdown(PREFIX."_wc_actions_forms[$hook]",
-        ['class'=>'ad-formlink-dropdown'], $id)
+        array('class'=>'ad-formlink-dropdown'), $id)
       .wp_nonce_field($hook.'-reset',"form_mapper_reset_$hook", true, false)
       ."</td>"
       .'<td><a class="ad-edit-linkedform '.$hook.'" style="'.$style.'"'
@@ -107,9 +107,9 @@ class FormLinker{
     ?>
       <?php settings_fields(PREFIX.'_woocommerce_linked_actions'); ?>
       <h2>Customer Profile Actions</h2>
-      <?php echo self::form_link_table(self::$customer_actions, ['class'=>'customer_form_table']);?>
+      <?php echo self::form_link_table(self::$customer_actions, array('class'=>'customer_form_table'));?>
       <h2>WooCommerce Order Status Changes</h2>
-      <?php echo self::form_link_table(self::$order_status_actions, ['class'=>'order_form_table']);?>
+      <?php echo self::form_link_table(self::$order_status_actions, array('class'=>'order_form_table'));?>
     <?php
   }
 
@@ -238,13 +238,15 @@ class FormLinker{
 
   function get_form_id($form_dom){
     $matches=array();
-    $form_attributes=$form_dom->getElementsByTagName('form')[0]->attributes;
+    $form_array=$form_dom->getElementsByTagName('form');
+    $form=$form_array[0];
+    $form_attributes=$form->attributes;
     if(isset($form_attributes)){
       $action=$form_attributes->getNamedItem('action')->nodeValue;
       \preg_match('/\d+$/', $action, $matches);
       return $matches[0];
     } else{
-      new \WP_Error('Form DOM returned '. print_r($form_dom->getElementsByTagName['form'], true));
+      new \WP_Error('Form DOM returned '. print_r($form_dom->getElementsByTagName, true));
   }
   }
 
@@ -318,7 +320,7 @@ function ajax_reset_action_form(){
     delete_option(PREFIX."_form_$action");
     echo "Form Deleted";
   } else if(update_option(PREFIX."_form_$action", ['id'=>$id])){
-    echo \json_encode([$action=>$id]);
+    echo \json_encode(array($action=>$id));
   } else{
     new \WP_Error("Could not update $action to $id");
   }
@@ -361,9 +363,9 @@ function ajax_show_form_mapper(){
 }
 
 add_action('admin_enqueue_scripts', function(){
-  wp_enqueue_script('featherlight', plugins_url('/includes/featherlight/featherlight.min.js',__FILE__), ['jquery']);
+  wp_enqueue_script('featherlight', plugins_url('/includes/featherlight/featherlight.min.js',__FILE__), array('jquery'));
   wp_enqueue_style('featherlight-style', plugins_url('/includes/featherlight/featherlight.min.css',__FILE__) );
-  wp_enqueue_script('activedemand-formlinker', plugins_url('/includes/activedemand-admin-formlinker.js', __FILE__), ['jquery'], '0.1');
+  wp_enqueue_script('activedemand-formlinker', plugins_url('/includes/activedemand-admin-formlinker.js', __FILE__), array('jquery'), '0.1');
 
 });
 

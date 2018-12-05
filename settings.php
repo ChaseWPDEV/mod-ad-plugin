@@ -74,7 +74,7 @@ function activedemand_stale_cart_form($options)
             <td><?php
             echo FormLinker::form_list_dropdown(
               PREFIX."_woocommerce_options_field[".PREFIX."_woocommerce_stalecart_form_id]",
-              [],
+              array(),
               $activedemand_form_id
             );?>
             <div style="font-size: small;"><strong>Note:</strong> The selected <?php echo PLUGIN_VENDOR?> Form must
