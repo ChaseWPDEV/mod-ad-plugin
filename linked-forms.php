@@ -319,7 +319,7 @@ function ajax_reset_action_form(){
   if($id===0){
     delete_option(PREFIX."_form_$action");
     echo "Form Deleted";
-  } else if(update_option(PREFIX."_form_$action", ['id'=>$id])){
+  } else if(update_option(PREFIX."_form_$action", array('id'=>$id)ii)){
     echo \json_encode(array($action=>$id));
   } else{
     new \WP_Error("Could not update $action to $id");
