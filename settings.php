@@ -141,7 +141,7 @@ function activedemand_plugin_options()
             <?php if ("" != $activedemand_appkey):?>
               <a href="?page=activedemand_options&view=content" class="nav-tab <?php echo $form_view==='content' ? 'nav-tab-active' : '' ?>">Content</a>
             <?php endif;?>
-            <?php if($woo_commerce_installed):?>
+            <?php if($woo_commerce_installed && ""!=$activedemand_appkey):?>
               <a href="?page=activedemand_options&view=woo" class="nav-tab <?php echo $form_view==='woo' ? 'nav-tab-active' : '' ?>">WooCommerce</a>
             <?php endif;?>
         </h2>
