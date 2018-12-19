@@ -105,12 +105,66 @@ class FormLinker{
   public static function linked_forms_page(){
 
     ?>
-      <?php settings_fields(PREFIX.'_woocommerce_linked_actions'); ?>
       <h2>Customer Profile Actions</h2>
       <?php echo self::form_link_table(self::$customer_actions, array('class'=>'customer_form_table'));?>
       <h2>WooCommerce Order Status Changes</h2>
       <?php echo self::form_link_table(self::$order_status_actions, array('class'=>'order_form_table'));?>
     <?php
+  }
+
+  public static function map_field_keys($map, $vars){
+    $user=$vars['user'];
+    $order=isset($vars['order']) ? $vars['order'] : NULL;
+    $cart=isset($vars['cart']) ? $vars['cart'] : NULL;
+    $data=array();
+    foreach($map as $name=>$arg){
+      switch($arg){
+        case 'username':
+          $data[$name]=$user->username;
+          break;
+        case 'user_firstname':
+          $data[$name]=$user->first_name;
+          break;
+        case 'user_lastname':
+        $data[$name]=$user->last_name;
+        break;
+        case 'user_email':
+        $data[$name]=$user->user_email;
+        break;
+        case 'produce_ids':
+          $ids=array();
+          foreach($order->items as $product){
+            if(!is_a($product, 'WC_Order_Item_Product')) continue;
+            $ids[]=$product->get_product_id();
+          }
+          $data[$name]=\json_encode($ids);
+          break;
+        case 'product_names':
+          $names=array_map(function($item){return $item->get_name();}, $order->items);
+          $data[$name]=\json_encode($names);
+          break;
+        case 'product_prices':
+            $price_map=array();
+            foreach($order->items as $product){
+              if(!is_a($product, 'WC_Order_Item_Product')) continue;
+              $price_map[$product->get_name()]=$product->get_subtotal();
+            }
+            $data[$name]=\json_encode($price_map);
+        case 'cart_product_data':
+          $products = $cart['cart']['cart'];
+          $data[$name]='';
+          foreach ($products as $product) {
+            $product_name = get_the_title($product['product_id']);
+            $data[$name] .= "Product Name: $product_name \n"
+                . "Product price: " . $product['price'] . '\n'
+                . 'Product Qty: ' . $product['quantity'] . '\n'
+                . 'Total: ' . $product['line_total'] . '\n\n';
+          }
+        default:
+        $data[$name]=get_user_meta($customer_id, $arg);
+      }
+    }
+    return $data;
   }
 
   public static function initialize_hooks(){
@@ -122,24 +176,8 @@ class FormLinker{
       add_action($hook, function($customer_id) use ($setting){
         $id=$setting['id'];
         $map=$setting['map'];
-        $data=array();
         $user=get_userdata($customer_id);
-        foreach($map as $name=>$arg){
-          switch($arg){
-            case 'username':
-              $data[$name]=$user->username;
-              break;
-            case 'user_firstname':
-              $data[$name]=$user->first_name;
-              break;
-            case 'user_lastname':
-            $data[$name]=$user->last_name;
-            break;
-            case 'user_email':
-            $data[$name]=$user->user_email;
-            break;
-          }
-        }
+        $data=FormLinker::map_field_keys($map, array('user'=>$user));
         $url="https://submit.activedemand.com/submit/form/$id";
         $response=wp_remote_post($url, array(
           'body'=>$data
@@ -162,27 +200,11 @@ class FormLinker{
       add_action($hook, function($new_status, $old_status, $post) use ($setting){
         $id=$setting['id'];
         $map=$setting['map'];
-        $data=array();
         $order=new WC_Order($post->ID);
         $user_id=$order->user_id;
         if(!($user_id)) return;
         $user=get_userdata($user_id);
-        foreach($map as $name=>$arg){
-          switch($arg){
-            case 'username':
-              $data[$name]=$user->username;
-              break;
-            case 'user_firstname':
-              $data[$name]=$user->first_name;
-              break;
-            case 'user_lastname':
-            $data[$name]=$user->last_name;
-            break;
-            case 'user_email':
-            $data[$name]=$user->user_email;
-            break;
-          }
-        }
+        $data=FormLinker::map_field_keys($map, array('user'=>$user, 'order'=>$order));
         $url="https://submit.activedemand.com/submit/form/$id";
         $response=wp_remote_post($url, array(
           'body'=>$data
@@ -291,12 +313,30 @@ class FormLinker{
       'username'=>'User Name',
       'user_firstname'=>'First Name',
       'user_lastname'=>'Last Name',
-      'user_email'=>'Email'
+      'user_email'=>'Email',
+      'billing_company'=>'Company',
+      'billing_postcode'=>'Zipcode',
+      'billing_state'=>'State/Province',
+      'billing_country'=>'Country',
+      'billing_phone'=>'Phone'
     );
+    if(in_array($action, self::$order_status_actions)){
+      $options=\array_merge($options, array(
+        'product_ids'=> 'Product IDs',
+        'product_names'=>'Product Names',
+        'product prices'=>'Product Prices'
+      ));
+    }
+    if($action===PREFIX.'_stale_cart_map'){
+      $options['cart_product_data']="Product Data";
+    }
     return '<form class="ad_form_mapper '.$action.'_mapper">'
       . wp_nonce_field($action.'-'.$id.'-update', 'form_mapper_update_nonce', true, false)
       . $this->form_field_mapper($id, $options, $setting)
+      .'<div style="float:right">'
+      .'<input type="button" value="Cancel" onclick="jQuery.featherlight.close();" />'
       .'<input type="button" value="Save" onclick="ad_form_linker_update(event, '.$id.', \''.$action.'\');">'
+      .'</div>'
       .'</form>';
   }
 

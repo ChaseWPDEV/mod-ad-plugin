@@ -273,8 +273,9 @@ function register_activedemand_settings()
     register_setting(PREFIX.'_options', PREFIX.'_show_tinymce');
     register_setting(PREFIX.'_options', PREFIX.'_server_side');
     register_setting(PREFIX.'_options', PREFIX.'_v2_script_url');
-
-    register_setting(PREFIX.'_woocommerce_linked_actions', PREFIX.'_wc_actions_forms');
+    
+    register_setting(PREFIX.'_woocommerce_options', PREFIX.'_stale_cart_map');
+    register_setting(PREFIX.'_woocommerce_options', PREFIX.'_wc_actions_forms');
 }
 
 
@@ -427,7 +428,7 @@ function activedemand_woocommerce_scan_stale_carts()
 
     $stale_secs = $hours * 60 * 60;
 
-    $carts = $wpdb->get_results('SELECT * FROM ' . $wpdb->usermeta . ' WHERE meta_key=' . AD_CARTTIMEKEY);
+    $carts = $wpdb->get_results($wpdb->prepare('SELECT * FROM ' . $wpdb->usermeta . ' WHERE meta_key=%s', AD_CARTTIMEKEY));
 
     $stale_carts = array();
     $i = 0;
@@ -467,24 +468,13 @@ function activedemand_plugin_deactivation()
  */
 function activedemand_send_stale_carts($stale_carts)
 {
+  $setting=get_setting(PREFIX.'_stale_cart_map');
     foreach ($stale_carts as $cart) {
-        $form_data = array();
         $user = new \WP_User($cart['user_id']);
-
-        $form_data['first_name'] = $user->user_firstname;
-        $form_data['last_name'] = $user->user_lastname;
-        $form_data['email_address'] = $user->user_email;
-
-        $products = $cart['cart']['cart'];
-        $form_data['product_data'] = '';
-
-        foreach ($products as $product) {
-            $product_name = get_the_title($product['product_id']);
-            $form_data['product_data'] .= "Product Name: $product_name \n"
-                . "Product price: " . $product['price'] . '\n'
-                . 'Product Qty: ' . $product['quantity'] . '\n'
-                . 'Total: ' . $product['line_total'] . '\n\n';
-        }
+        $form_data=FormLinker::map_field_keys($setting['map'], array(
+          'user'=>$user,
+          'cart'=>$cart
+        ));
         _activedemand_send_stale_cart($form_data);
         delete_user_meta($user->ID, AD_CARTTIMEKEY);
     }

@@ -53,9 +53,10 @@ function activedemand_carts($options){
   <button class="tablinks" onclick="adShowTab(event, 'cart_recovery')">Cart Recovery</button>
 </div>
 <form method="post" action="options.php" class="ad-settings-form">
+  <?php settings_fields(PREFIX.'_woocommerce_options'); ?>
   <div class="tabcontent" id="automation" style="display:block;"><?php FormLinker::linked_forms_page();?></div>
   <div class="tabcontent" id="cart_recovery" style="display:none;"><?php activedemand_stale_cart_form($options);?></div>
-  <input type="submit" value="Save" class="button-primary" style="float:right;">
+  <input type="submit" value="Save" class="button-primary ad-setting-save">
 </form>
 <?php
 }
@@ -67,23 +68,16 @@ function activedemand_stale_cart_form($options)
     $hours = isset($options['woocommerce_stalecart_hours']) ? $options['woocommerce_stalecart_hours'] : 2;
 
     ?>
-      <?php settings_fields(PREFIX.'_woocommerce_options'); ?>
       <table>
           <tr valign="top">
             <th scope="row">WooCommerce Carts:</th>
             <td><?php
-            echo FormLinker::form_list_dropdown(
+            echo FormLinker::form_link_table(array('Process Stale Carts'=>PREFIX.'_stale_cart_map'));
+            /*echo FormLinker::form_list_dropdown(
               PREFIX."_woocommerce_options_field[".PREFIX."_woocommerce_stalecart_form_id]",
               array(),
               $activedemand_form_id
-            );?>
-            <div style="font-size: small;"><strong>Note:</strong> The selected <?php echo PLUGIN_VENDOR?> Form must
-              have <strong>[First
-                Name]</strong>-<strong>[Last Name]</strong>-<strong>[Email
-                  Address*]</strong>-<strong>[Product Data]</strong>
-                  as the first 4 fields.
-                  Ensure that the [Product Data] field is a text area.
-                </div>
+            ); */?>
             </td></tr>
             <tr><th>
                   Send Stale carts to <?php echo PLUGIN_VENDOR?> after it has sat for:</th>
@@ -324,7 +318,7 @@ function activedemand_plugin_options()
                     </tr>
                 <?php } ?>
               </table>
-                <input type="submit" value="Save" class="button-primary" style="float:right;">
+                <input type="submit" value="Save" class="button-primary ad-setting-save">
               </form>
                 <?php endswitch; ?>
           <?php activedemand_settings_styles();?>
@@ -414,6 +408,11 @@ function activedemand_settings_styles()
           color: white;
           background-color: black;
           padding: 10px;
+      }
+
+      .ad-setting-save{
+        position: relative;
+        left: 65%;
       }
   </style>
   <?php
