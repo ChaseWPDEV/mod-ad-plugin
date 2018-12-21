@@ -68,7 +68,7 @@ function adShowTab(evt, tabName){
 function ad_form_linker_update(event, id, action){
   var map={};
   var $=jQuery;
-  var form=$(event.target).parent('form');
+  var form=$(event.target).parents('form');
   form.find('select').each(function(){
     var name=$(this).prop('name');
     var field=/form\[\w+\]/.exec(name)[0];
