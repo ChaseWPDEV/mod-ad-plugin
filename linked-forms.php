@@ -333,9 +333,11 @@ class FormLinker{
     return '<form class="ad_form_mapper '.$action.'_mapper">'
       . wp_nonce_field($action.'-'.$id.'-update', 'form_mapper_update_nonce', true, false)
       . $this->form_field_mapper($id, $options, $setting)
-      .'<div style="float:right">'
-      .'<input type="button" value="Cancel" onclick="jQuery.featherlight.close();" />'
-      .'<input type="button" value="Save" onclick="ad_form_linker_update(event, '.$id.', \''.$action.'\');">'
+      .'<div style="float:right;margin-top:15px;">'
+      .'<input type="button" value="Save Changes" class="button-primary" onclick="ad_form_linker_update(event, '.$id.', \''.$action.'\');">'
+      .'<input type="button" value="Cancel" class="button-primary" '
+        .'style="color: black;background-color:white;text-shadow:none;border-color: black;margin-left: 5px;box-shadow:none;" '
+        .'onclick="jQuery.featherlight.close();" />'
       .'</div>'
       .'</form>';
   }

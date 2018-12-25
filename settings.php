@@ -56,7 +56,7 @@ function activedemand_carts($options){
   <?php settings_fields(PREFIX.'_woocommerce_options'); ?>
   <div class="tabcontent" id="automation" style="display:block;"><?php FormLinker::linked_forms_page();?></div>
   <div class="tabcontent" id="cart_recovery" style="display:none;"><?php activedemand_stale_cart_form($options);?></div>
-  <input type="submit" value="Save" class="button-primary ad-setting-save">
+  <input type="submit" value="Save Changes" class="button-primary ad-setting-save">
 </form>
 <?php
 }
@@ -318,7 +318,7 @@ function activedemand_plugin_options()
                     </tr>
                 <?php } ?>
               </table>
-                <input type="submit" value="Save" class="button-primary ad-setting-save">
+                <input type="submit" value="Save Changes" class="button-primary ad-setting-save">
               </form>
                 <?php endswitch; ?>
           <?php activedemand_settings_styles();?>
@@ -410,10 +410,9 @@ function activedemand_settings_styles()
           padding: 10px;
       }
 
-      .ad-setting-save{
-        position: relative;
-        left: 65%;
-      }
+    .button-primary.ad-setting-save {
+        margin-top: 15px;
+    }
   </style>
   <?php
 }
